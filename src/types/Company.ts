@@ -1,4 +1,5 @@
 export interface ICompany {
+  id: number;
   name: string,
   service: string,
   logotype: string,

@@ -1,44 +1,44 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
-import { getRegisterUser } from "../api/user";
-import { IUserRespons } from "../types/User";
+import { useNavigate, useParams } from "react-router-dom";
+import { CustomLoader } from "./customLoader";
+import { UserWithoutToken } from "../types/User";
+import { useUsersContext } from "../controllers/useUsersContext";
 
 export const ActivateMessage = () => {
   const { activatedToken } = useParams<{ activatedToken: string }>();
+  const navigate = useNavigate();
+  const { activate } = useUsersContext();
 
   const getResponse = async () => {
     if (!activatedToken) {
-      throw new Error('No activation token provided');
+      throw new Error("No activation token provided");
     }
-    const resp = await getRegisterUser(activatedToken);
 
-    return resp.data;
+    return await activate(activatedToken);
   };
-  
-  console.log('activatedToken', activatedToken);
 
-  const { error, isLoading, isSuccess } = useQuery<IUserRespons, Error>({
-    queryKey: ['activateUser', activatedToken],
+  const { error, isLoading, isSuccess } = useQuery<UserWithoutToken, Error>({
+    queryKey: ["activateUser", activatedToken],
     queryFn: getResponse,
-    enabled: !!activatedToken,
+    enabled: !!activatedToken
   });
 
-  console.log('error, isLoading, isSuccess', error, isLoading, isSuccess)
+  console.log("error, isLoading, isSuccess", error, isLoading, isSuccess);
 
   if (isLoading) {
-    return <p>Activating your account...</p>;
+    return <CustomLoader loaderSize={140} paddingY={150} />;
   }
 
   if (error) {
-    return <p>Something went wrong during activation!</p>;
+    navigate("/login");
+    return null;
   }
 
   if (isSuccess) {
-    return (
-      <div>
-        <h1>Activation Status:</h1>
-        <p>Your account was successfully activated!</p>
-      </div>
-    );
+    navigate("/companies");
+    return null;
   }
-}
+
+
+  return null;;
+};

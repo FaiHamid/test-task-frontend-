@@ -1,12 +1,27 @@
 import React from 'react';
-import { IUserRespons } from '../types/User';
+import { IUserLogin, UserWithoutToken } from '../types/User';
 
 export interface UsersContextType {
-  currentUser: IUserRespons | null;
-  onChangeCurrUser: (user: IUserRespons | null) => void;
+  currentUser: UserWithoutToken | null;
+  email: string;
+  onChangeCurrUser: (user: UserWithoutToken | null) => void;
+  login: (user: IUserLogin) => void;
+  logout: () => void;
+  activate: (activateToken: string) => Promise<UserWithoutToken>;
+  handleEmailChange: (newEmail: string) => void;
 }
 
 export const UsersContext = React.createContext<UsersContextType>({
   currentUser: null,
-  onChangeCurrUser: () => {}
+  email: '',
+  onChangeCurrUser: () => {},
+  login: () => {},
+  logout: () => {},
+  activate: () => (new Promise(() => ({
+    name: '',
+    surname: '',
+    email: '',
+    avatar: '',
+  }))),
+  handleEmailChange: () => {}
 });

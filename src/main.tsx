@@ -9,6 +9,11 @@ import { InformMessage } from "./components/informMessage.tsx";
 import { ActivateMessage } from "./components/activateMessage.tsx";
 import { UsersContextProvider } from "./controllers/usersContextProvider.tsx";
 import { CompaniesList } from "./pages/companiesList.tsx";
+import { Profile } from "./pages/profile.tsx";
+import { Dashboard } from "./pages/dashboard.tsx";
+import { NewCompany } from "./pages/addNewCompany.tsx";
+import { RequireAuth } from "./utils/requireAuthRouters.tsx";
+import { RequireNonAuth } from "./utils/requireNonAuthRouters.tsx";
 
 const queryClient = new QueryClient();
 
@@ -18,14 +23,22 @@ createRoot(document.getElementById("root")!).render(
       <Router>
         <Routes>
           <Route path="/" element={<App />}>
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />}/>
-            <Route path="check-email" element={<InformMessage />}/>
-            <Route path="companies" element={<CompaniesList />}/>
-            <Route
-              path="activate/:activatedToken"
-              element={<ActivateMessage />}
-            />
+            <Route element={<RequireNonAuth />}>
+              <Route path="register" element={<Register />} />
+              <Route path="check-email" element={<InformMessage />} />
+              <Route path="login" element={<Login />} />
+              <Route
+                path="activate/:activatedToken"
+                element={<ActivateMessage />}
+              />
+            </Route>
+
+            <Route element={<RequireAuth />}>
+              <Route path="companies" element={<CompaniesList />} />
+              <Route path="new" element={<NewCompany />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
           </Route>
         </Routes>
       </Router>
