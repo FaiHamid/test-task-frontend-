@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { UsersContext } from './usersContext';
-import { IUserLogin, UserWithoutToken } from '../types/User';
-import { authService } from '../services/authService';
-import { accessTokenService } from '../services/accessTokenService';
-import { userService } from '../services/userService';
+import React, { useEffect, useMemo, useState } from "react";
+import { UsersContext } from "./usersContext";
+import { IUserLogin, IUserToChange, UserWithoutToken } from "../types/User";
+import { authService } from "../services/authService";
+import { accessTokenService } from "../services/accessTokenService";
+import { userService } from "../services/userService";
 
 interface Props {
   children: React.ReactNode;
@@ -11,15 +11,17 @@ interface Props {
 
 export const UsersContextProvider: React.FC<Props> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserWithoutToken | null>(null);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
 
   const handleEmailChange = (newEmail: string) => {
     setEmail(newEmail);
   };
 
-
   async function login({ email, password }: IUserLogin) {
-    const { accessToken, ...user } = await authService.login({ email, password });
+    const { accessToken, ...user } = await authService.login({
+      email,
+      password,
+    });
 
     accessTokenService.save(accessToken);
     setCurrentUser(user);
@@ -42,14 +44,19 @@ export const UsersContextProvider: React.FC<Props> = ({ children }) => {
   }
 
   async function activate(activateToken: string): Promise<UserWithoutToken> {
-    console.log('hello1')
     const { accessToken, ...user } = await authService.activate(activateToken);
-    console.log('response user', user);
-    console.log('response token', accessToken);
+
     accessTokenService.save(accessToken);
     setCurrentUser(user);
 
     return user;
+  }
+
+  async function updateUser(userData: Partial<IUserToChange>) {
+    if (currentUser) {
+      const user = await userService.updateUser(currentUser.id, userData);
+      setCurrentUser(user);
+    }
   }
 
   useEffect(() => {
@@ -64,9 +71,10 @@ export const UsersContextProvider: React.FC<Props> = ({ children }) => {
       login,
       logout,
       activate,
-      handleEmailChange
+      handleEmailChange,
+      updateUser,
     }),
-    [currentUser, email],
+    [currentUser, email]
   );
 
   return (

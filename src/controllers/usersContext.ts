@@ -1,5 +1,5 @@
 import React from 'react';
-import { IUserLogin, UserWithoutToken } from '../types/User';
+import { IUserLogin, IUserToChange, UserWithoutToken } from '../types/User';
 
 export interface UsersContextType {
   currentUser: UserWithoutToken | null;
@@ -9,6 +9,7 @@ export interface UsersContextType {
   logout: () => void;
   activate: (activateToken: string) => Promise<UserWithoutToken>;
   handleEmailChange: (newEmail: string) => void;
+  updateUser: (userData: Partial<IUserToChange>) => void;
 }
 
 export const UsersContext = React.createContext<UsersContextType>({
@@ -23,5 +24,6 @@ export const UsersContext = React.createContext<UsersContextType>({
     email: '',
     avatar: '',
   }))),
-  handleEmailChange: () => {}
+  handleEmailChange: () => {},
+  updateUser: () => {}
 });

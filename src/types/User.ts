@@ -12,6 +12,7 @@ export interface IUserLogin {
 };
 
 export interface IUserRespons {
+  id: number,
   name: string,
   surname: string,
   email: string,
@@ -24,6 +25,9 @@ export type UserWithoutToken = Omit<IUserRespons, 'accessToken'>
 export interface IUserToChange {
   name: string,
   surname: string,
+  avatar?: string,
+  hashPassword?: string,
+  password?: string,
 }
 
 export enum EVariantLogout {
@@ -31,3 +35,21 @@ export enum EVariantLogout {
   Button="button"
 }
 
+export interface IPasswordData {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface AxiosError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+export enum ESnackbarStatus {
+  Success="success",
+  Error="error"
+}

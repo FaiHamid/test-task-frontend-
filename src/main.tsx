@@ -14,6 +14,7 @@ import { Dashboard } from "./pages/dashboard.tsx";
 import { NewCompany } from "./pages/addNewCompany.tsx";
 import { RequireAuth } from "./utils/requireAuthRouters.tsx";
 import { RequireNonAuth } from "./utils/requireNonAuthRouters.tsx";
+import { ResetPassword } from "./pages/resetPassword.tsx";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="new" element={<NewCompany />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="reset-password" element={<ResetPassword />}/>
             </Route>
           </Route>
         </Routes>

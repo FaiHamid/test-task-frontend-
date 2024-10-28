@@ -48,4 +48,4 @@ const nameAndSurname = (name: string, field: string) => {
   return '';
 };
 
-export const validate= { email, password, confirmPassword, nameAndSurname };
+export const validate = { email, password, confirmPassword, nameAndSurname };

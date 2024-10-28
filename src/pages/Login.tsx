@@ -1,40 +1,25 @@
 import React, { useState } from "react";
-import {
-  Button,
-  FormControl,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  OutlinedInput,
-  TextField,
-} from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Button, TextField } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { IUserLogin } from "../types/User";
 import { useUsersContext } from "../controllers/useUsersContext";
 import { CustomLoader } from "../components/customLoader";
+import { PasswordField } from "../components/PasswordField";
+import { validateLoginForm } from "../utils/validatationForms";
 
 export const Login: React.FunctionComponent = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [currentUser, setCurrentUser] = useState({
+  const [currentUser, setCurrentUser] = useState<IUserLogin>({
     email: "",
     password: "",
   });
-
+  const [formErrors, setFormErrors] = useState<IUserLogin>({
+    email: "",
+    password: "",
+  });
   const { login } = useUsersContext();
   const navigate = useNavigate();
   const { state } = useLocation();
-
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleMouseDownPassword = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
-  };
 
   const mutation = useMutation<void, Error>({
     mutationFn: async () => {
@@ -50,17 +35,36 @@ export const Login: React.FunctionComponent = () => {
     },
   });
 
+  const resetErrors = () => {
+    setFormErrors({
+      email: "",
+      password: "",
+    });
+  };
+
+  const changeUserState = (newValue: string, field: keyof IUserLogin) => {
+    if (formErrors[field]) {
+      setFormErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
+    }
+    setCurrentUser((prevUser) => ({ ...prevUser, [field]: newValue }));
+  };
+
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const errors = validateLoginForm(currentUser);
+    const hasErrors = Object.values(errors).some((error) => error !== "");
+    setFormErrors(errors);
+
+    if (hasErrors) {
+      return;
+    }
+
     try {
       await mutation.mutateAsync();
+      resetErrors();
     } catch (error) {
       console.error("Failed to login user:", error);
     }
-  };
-
-  const changeUserState = (newValue: string, field: string) => {
-    setCurrentUser((prevUser) => ({ ...prevUser, [field]: newValue }));
   };
 
   return (
@@ -69,7 +73,7 @@ export const Login: React.FunctionComponent = () => {
       className="max-w-[600px] bg-white mx-auto flex flex-col py-7 px-16 rounded-lg mt-5 border border-light-gray"
     >
       {mutation.isPending ? (
-        <CustomLoader loaderSize={110} paddingY={61}/>
+        <CustomLoader loaderSize={110} paddingY={61} />
       ) : (
         <>
           <h1 className="text-[24px] mb-5">Login:</h1>
@@ -77,32 +81,19 @@ export const Login: React.FunctionComponent = () => {
             id="outlined-basic"
             label="Email"
             variant="outlined"
+            error={!!formErrors.email}
+            helperText={formErrors.email}
+            value={currentUser.email}
             onChange={(e) => changeUserState(e.target.value, "email")}
             sx={{ mb: "12px", width: "100%" }}
           />
-          <FormControl sx={{ ml: 0, width: "100%" }} variant="outlined">
-            <InputLabel htmlFor="outlined-adornment-password">
-              Password
-            </InputLabel>
-            <OutlinedInput
-              id="outlined-adornment-password"
-              type={showPassword ? "text" : "password"}
-              onChange={(e) => changeUserState(e.target.value, "password")}
-              endAdornment={
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleClickShowPassword}
-                    onMouseDown={handleMouseDownPassword}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              }
-              label="Password"
-            />
-          </FormControl>
+          <PasswordField<IUserLogin>
+            value={currentUser.password}
+            errorValue={formErrors.password}
+            field="password"
+            label="Password"
+            onChangeValue={changeUserState}
+          />
           <div className="flex justify-between mt-5">
             <Button variant="contained" type="submit">
               Sign in
@@ -110,7 +101,7 @@ export const Login: React.FunctionComponent = () => {
             <Button
               variant="contained"
               color="success"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate("/register")}
             >
               Sign up
             </Button>

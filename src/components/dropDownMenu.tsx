@@ -33,7 +33,7 @@ export const DropdownMenu: React.FC = () => {
   return (
     <div>
       <div className="flex items-center" onClick={handleClick} style={{ cursor: 'pointer' }}>
-        <Avatar size={40} source='https://i.imgur.com/aX3x1wT.png' altText='avatar'/>
+        <Avatar size={40} source={currentUser?.avatar || 'https://i.imgur.com/aX3x1wT.png'} altText='avatar'/>
         <p>{`${currentUser?.name} ${currentUser?.surname}`}</p>
       </div>
       <Menu
