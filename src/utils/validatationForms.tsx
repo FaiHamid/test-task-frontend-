@@ -1,3 +1,4 @@
+import { ICompany, ICompanyFormErrors } from "../types/Company";
 import { IPasswordData, IUser, IUserLogin, IUserToChange } from "../types/User";
 import { validate } from "./validateFormElements";
 
@@ -78,6 +79,33 @@ export const validateProfileForm = (formData: IUserToChange) => {
 
       if (typedKey === 'name' || typedKey === "surname") {
         errors[typedKey] = validate.nameAndSurname(formData[typedKey], typedKey);
+      }
+    }
+  }
+
+  return errors;
+}
+
+export const validateNewCompanyForm = (formData: Omit<ICompany, "idUser">) => {
+  const errors: ICompanyFormErrors = {
+    name: "",
+    service: "",
+    capital: "",
+    price: ""
+  }
+
+  for (const key in formData) {
+    if (Object.prototype.hasOwnProperty.call(formData, key)) {
+      const typedKey = key as keyof Omit<ICompany, "idUser">;
+
+      switch(typedKey) {
+        case 'name':
+        case 'service':
+          errors[typedKey] = validate.nameAndSurname(formData[typedKey], typedKey);
+          break;
+        case 'capital':
+        case 'price':
+          errors[typedKey] = validate.moneyValue(formData[typedKey], key)
       }
     }
   }

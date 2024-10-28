@@ -6,7 +6,7 @@ import { IUser } from "../types/User";
 import { useNavigate } from "react-router-dom";
 import { CustomLoader } from "../components/customLoader";
 import { useUsersContext } from "../controllers/useUsersContext";
-import { PasswordField } from "../components/PasswordField";
+import { PasswordField } from "../components/passwordField";
 import { validateRegisterForm } from "../utils/validatationForms";
 
 export const Register: React.FunctionComponent = () => {

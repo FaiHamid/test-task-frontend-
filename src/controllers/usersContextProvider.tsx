@@ -4,6 +4,7 @@ import { IUserLogin, IUserToChange, UserWithoutToken } from "../types/User";
 import { authService } from "../services/authService";
 import { accessTokenService } from "../services/accessTokenService";
 import { userService } from "../services/userService";
+import { ICompanyResponse } from "../types/Company";
 
 interface Props {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface Props {
 
 export const UsersContextProvider: React.FC<Props> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserWithoutToken | null>(null);
+  const [currentCompany, setCurrentCompany] = useState<ICompanyResponse | null>(null);
   const [email, setEmail] = useState("");
 
   const handleEmailChange = (newEmail: string) => {
@@ -67,15 +69,17 @@ export const UsersContextProvider: React.FC<Props> = ({ children }) => {
     () => ({
       currentUser,
       email,
+      currentCompany,
       onChangeCurrUser: setCurrentUser,
       login,
       logout,
       activate,
       handleEmailChange,
       updateUser,
+      onChangeCompany: setCurrentCompany,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentUser, email]
+    [currentUser, email, currentCompany]
   );
 
   return (

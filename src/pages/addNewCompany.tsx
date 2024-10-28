@@ -1,142 +1,191 @@
 import { Button, TextField } from "@mui/material";
-import React, { useRef, useState } from "react";
-import { Avatar } from "../components/avatar";
+import React, { useState } from "react";
 import { Autocomplete, LoadScript } from "@react-google-maps/api";
+import { ETargetObject, ICompany, ICompanyFormErrors } from "../types/Company";
+import { ESnackbarStatus } from "../types/User";
+import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
+import { useMutation } from "@tanstack/react-query";
+import { companiesService } from "../services/companiesService";
+import { validateNewCompanyForm } from "../utils/validatationForms";
+// import { useUsersContext } from "../controllers/useUsersContext";
 
 export const NewCompany: React.FC = () => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [address, setAddress] = useState('');
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [address, setAddress] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarDetails, setSnackbarDetails] = useState({
+    message: "",
+    status: ESnackbarStatus.Success,
+  });
   // eslint-disable-next-line no-undef
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-  
-  // const mapContainerStyle = {
-  //   height: "400px",
-  //   width: "800px"
-  // };
-  console.log(coordinates);
+  const [companyData, setCompanyData] = useState<Omit<ICompany, "idUser">>({
+    name: "",
+    service: "",
+    logotype: "",
+    capital: 0,
+    latitude: "",
+    longitude: "",
+    price: 0
+  });
+
+  const [formErrors, setFormErrors] = useState<Partial<ICompanyFormErrors>>({
+    name: "",
+    service: "",
+    capital: "",
+    price: ""
+  });
+
   const GOOGLE_API_KEY = import.meta.env.VITE_API_KEY;
 
-  const handleAddressChange = (event) => {
+  const handleAddressChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const value = event.target.value;
     setAddress(value);
-    
+
     if (autocomplete) {
-      autocomplete.set('place', null); 
+      autocomplete.set("place", null);
     }
   };
 
   const handlePlaceSelect = () => {
     if (autocomplete) {
-          const place = autocomplete.getPlace();
-    if (place && place.geometry) {
-      const { lat, lng } = place.geometry.location;
-      setCoordinates({ lat: lat(), lng: lng() });
-      setAddress(place.formatted_address || '');
-    }
+      const place = autocomplete.getPlace();
+      if (place && place.geometry && place.geometry.location) {
+        const location = place.geometry.location;
+        const lat = location.lat();
+        const lng = location.lng();
+        setCompanyData(prevCompany => ({
+          ...prevCompany,
+          latitude: lat.toString(),
+          longitude: lng.toString(),
+        }));
+        setAddress(place.formatted_address || "");
+      }
     }
   };
 
-
-  const handleClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+  const changeCompanyState = (
+    newValue: string,
+    field: keyof ICompany
+  ) => {
+    if (Object.prototype.hasOwnProperty.call(formErrors, field)) {
+      setFormErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
     }
+    if (field === 'price' || field === 'capital') {
+      if (/^\d*$/.test(newValue)) {
+        setCompanyData((prevCompany) => ({ ...prevCompany, [field]: +newValue }));
+      } else {
+        return;
+      }
+    }
+    setCompanyData((prevCompany) => ({ ...prevCompany, [field]: newValue }));
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      console.log("Завантажений файл:", file);
+  const mutation = useMutation<void, Error, ICompany>({
+    mutationFn: async (newUser) => {
+      await companiesService.addNewCompany(newUser);
+      return;
+    },
+    onSuccess: () => {},
+    onError: (error) => {
+      console.error("Registration failed:", error);
+    },
+  });
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const errors = validateNewCompanyForm(companyData);
+    const hasErrors = Object.values(errors).some((error) => error !== "");
+    setFormErrors(errors);
+
+    if (hasErrors) {
+      return;
     }
-  };
+
+  }
+
   return (
-    <div className="rounded-md bg-white p-10 border border-light-blue">
+    <form 
+      onSubmit={handleSubmit}
+      className="rounded-md bg-white p-10 border border-light-blue"
+    >
       <p className="text-[36px] font-semibold mb-3">Add new company:</p>
-      <div className="">
-        <div>
-          <div onClick={handleClick} className="cursor-pointer mb-2">
-            <Avatar
-              size={150}
-              source="https://i.imgur.com/E9Yh93D.png"
-              altText="add company logotype"
-            />
-          </div>
-
-          <input
-            type="file"
-            accept="image/jpeg, image/png"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
-        </div>
-        <p className="text-semi-gray mb-2 ml-6">add logotype</p>
+      <div className="flex items-center mb-10 relative">
+      <UploadAvatarOrLogo
+          previewURL={previewURL}
+          targetType={ETargetObject.Company}
+          selectedFile={selectedFile}
+          onChangePreviewURL={setPreviewURL}
+          onChangeSelectedFile={setSelectedFile}
+        />
       </div>
       <div className="max-w-[400px]">
         <p className="mb-3 font-semibold">Name:</p>
         <TextField
+          required
           id="outlined-basic"
           variant="outlined"
-          value="Loren"
-          // onChange={(e) => changeUserState(e.target.value, "email")}
+          value={companyData.name}
+          placeholder="Enter company name"
+          onChange={(e) => changeCompanyState(e.target.value, "name")}
           sx={{ mb: "25px", width: "100%" }}
         />
 
         <p className="mb-3 font-semibold">Service:</p>
         <TextField
+          required
           id="outlined-basic"
           variant="outlined"
-          value="Ipsumovich"
-          // onChange={(e) => changeUserState(e.target.value, "email")}
+          placeholder="Enter company service"
+          value={companyData.service}
+          onChange={(e) => changeCompanyState(e.target.value, "service")}
           sx={{ mb: "35px", width: "100%" }}
         />
 
         <p className="mb-3 font-semibold">Capital:</p>
         <TextField
+          required
           id="outlined-basic"
           variant="outlined"
-          value="Ipsumovich"
-          // onChange={(e) => changeUserState(e.target.value, "email")}
+          value={companyData.capital}
+          onChange={(e) => changeCompanyState(e.target.value, "capital")}
           sx={{ mb: "35px", width: "100%" }}
         />
 
-        <LoadScript
-          googleMapsApiKey={GOOGLE_API_KEY}
-          libraries={["places"]}
-        >
+        <p className="mb-3 font-semibold">Price:</p>
+        <TextField
+          required
+          id="outlined-basic"
+          variant="outlined"
+          value={companyData.price}
+          onChange={(e) => changeCompanyState(e.target.value, "price")}
+          sx={{ mb: "35px", width: "100%" }}
+        />
+
+        <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={["places"]}>
           <Autocomplete
             onLoad={(autocomplete) => setAutocomplete(autocomplete)}
             onPlaceChanged={handlePlaceSelect}
           >
             <>
-            <p className="mb-3 font-semibold">Address:</p>
-            <TextField
-              type="text"
-              value={address}
-              onChange={handleAddressChange}
-              placeholder="Enter address"
-              sx={{ mb: "35px", width: "100%" }}
-            />
+              <p className="mb-3 font-semibold">Address:</p>
+              <TextField
+                type="text"
+                value={address}
+                onChange={handleAddressChange}
+                placeholder="Enter address"
+                sx={{ mb: "35px", width: "100%" }}
+              />
             </>
           </Autocomplete>
-
-          {/* {coordinates && (
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={coordinates}
-              zoom={10}
-            >
-              <Marker position={coordinates} />
-            </GoogleMap>
-          )} */}
         </LoadScript>
       </div>
-      <Button variant="contained" sx={{ mb: "50px" }}>
-        {" "}
+      <Button variant="contained" sx={{ mb: "50px" }} type="submit">
         Save
       </Button>
-    </div>
+    </form>
   );
 };

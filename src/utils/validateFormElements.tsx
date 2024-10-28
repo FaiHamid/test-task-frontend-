@@ -48,4 +48,14 @@ const nameAndSurname = (name: string, field: string) => {
   return '';
 };
 
-export const validate = { email, password, confirmPassword, nameAndSurname };
+const moneyValue = (value: number, field: string) => {
+  if (!value) {
+    return `${field} cannot be empty`;
+  } else if (value < 1000 || value > 10000000) {
+    return `${field} can\`t be bigger than 10000000 and smaller than 1000`;
+  }
+
+  return '';
+}
+
+export const validate = { email, password, confirmPassword, nameAndSurname, moneyValue };

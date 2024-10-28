@@ -1,8 +1,7 @@
-import React, { useRef, useState } from "react";
-import { Avatar } from "../components/avatar";
+import React, { useState } from "react";
 import { Button, TextField } from "@mui/material";
 import { useUsersContext } from "../controllers/useUsersContext";
-import { LogoutComponent } from "../services/logoutService";
+import { LogoutComponent } from "../components/logoutComponent";
 import { ESnackbarStatus, EVariantLogout, IUserToChange } from "../types/User";
 import { firebaseService } from "../services/firebaseService";
 import { useMutation } from "@tanstack/react-query";
@@ -10,9 +9,10 @@ import { useNavigate } from "react-router-dom";
 import { AutohideSnackbar } from "../utils/snackBar";
 import { validateProfileForm } from "../utils/validatationForms";
 import { AxiosError } from "axios";
+import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
+import { ETargetObject } from "../types/Company";
 
 export const Profile: React.FC = () => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { currentUser, updateUser } = useUsersContext();
   const [previewURL, setPreviewURL] = useState<string | null>(null);
@@ -25,43 +25,17 @@ export const Profile: React.FC = () => {
     surname: "",
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarStatus, setSnackbarStatus] = useState<ESnackbarStatus>(ESnackbarStatus.Success);
+  const [snackbarDetails, setSnackbarDetails] = useState({
+    message: "",
+    status: ESnackbarStatus.Success,
+  });
   const navigate = useNavigate();
-
-  const handleClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleCancelUpload = () => {
-    setSelectedFile(null);
-    setPreviewURL(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
 
   const resetErrors = () => {
     setFormErrors({
       name: "",
       surname: "",
     });
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      setSelectedFile(file);
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewURL(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const mutation = useMutation<void, Error>({
@@ -113,16 +87,20 @@ export const Profile: React.FC = () => {
     if (selectedFile) {
       try {
         await mutation.mutateAsync();
-        setSnackbarMessage('Success change information')
-        setSnackbarStatus(ESnackbarStatus.Success);
+        setSnackbarDetails({
+          message: "Success change information",
+          status: ESnackbarStatus.Success
+        });
         setSnackbarOpen(true);
         dataToReq.avatar = previewURL || "";
         resetErrors();
       } catch (error: unknown) {
         if (error instanceof AxiosError && error.response?.data?.message) {
           const errorMessage = error.response.data.message;
-          setSnackbarMessage(errorMessage);
-          setSnackbarStatus(ESnackbarStatus.Error);
+          setSnackbarDetails({
+            message: errorMessage,
+            status: ESnackbarStatus.Error
+          });
           setSnackbarOpen(true);
         }
         console.error("Failed to save user avatar:", error);
@@ -141,14 +119,18 @@ export const Profile: React.FC = () => {
       await mutationUser.mutateAsync(dataToReq);
       setPreviewURL("");
       setSelectedFile(null);
-      setSnackbarMessage('Success change information')
-      setSnackbarStatus(ESnackbarStatus.Success);
+      setSnackbarDetails({
+        message: "Success change information",
+        status: ESnackbarStatus.Success
+      });
       setSnackbarOpen(true);
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data?.message) {
         const errorMessage = error.response.data.message;
-        setSnackbarMessage(errorMessage);
-        setSnackbarStatus(ESnackbarStatus.Error);
+        setSnackbarDetails({
+          message: errorMessage,
+          status: ESnackbarStatus.Error
+        });
         setSnackbarOpen(true);
       }
       console.error("Failed to save user:", error);
@@ -165,35 +147,14 @@ export const Profile: React.FC = () => {
   return (
     <div className="rounded-md bg-white p-10 border border-light-blue">
       <div className="flex items-center mb-10 relative">
-        <Avatar
-          size={150}
-          source={previewURL || currentUser?.avatar || ""}
-          altText="avatar"
+        <UploadAvatarOrLogo 
+          previewURL={previewURL}
+          targetType={ETargetObject.User}
+          selectedFile={selectedFile}
+          onChangePreviewURL={setPreviewURL}
+          onChangeSelectedFile={setSelectedFile}
         />
-        {selectedFile && (
-          <button
-            onClick={handleCancelUpload}
-            className="pointer w-10 h-10 bg-gray-100 rounded-full p-2 absolute 
-            left-0 top-[100px] border-2 border-semi-gray"
-          >
-            <img src="https://i.imgur.com/KpD60ma.png" alt="Cancel Upload" />
-          </button>
-        )}
-        <div className="relative">
-          <button
-            onClick={handleClick}
-            className="pointer w-12 h-12 bg-light-blue rounded-full p-2 absolute right-2 top-5"
-          >
-            <img src="https://i.imgur.com/ccmMXRa.png" alt="Upload Icon" />
-          </button>
-          <input
-            type="file"
-            accept="image/jpeg, image/png"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
-        </div>
+
         <div className="ml-5">
           <p className="text-[24px] font-semibold mb-3">{`${currentUser?.name} ${currentUser?.surname}`}</p>
           <p className="text-semi-gray mb-2">{currentUser?.email}</p>
@@ -246,7 +207,12 @@ export const Profile: React.FC = () => {
           handleClick={() => {}}
         />
       </div>
-      <AutohideSnackbar message={snackbarMessage} isOpen={snackbarOpen} onClose={setSnackbarOpen} status={snackbarStatus}/>
+      <AutohideSnackbar
+        message={snackbarDetails.message}
+        isOpen={snackbarOpen}
+        onClose={setSnackbarOpen}
+        status={snackbarDetails.status}
+      />
     </div>
   );
 };

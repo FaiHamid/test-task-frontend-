@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CustomLoader } from "../components/customLoader";
-import { PasswordField } from "../components/PasswordField";
+import { PasswordField } from "../components/passwordField";
 import { ESnackbarStatus, IPasswordData, IUserToChange } from "../types/User";
 import { Button } from "@mui/material";
 import { validateResetPasswordForm } from "../utils/validatationForms";
@@ -12,17 +12,19 @@ import { useNavigate } from "react-router-dom";
 
 export const ResetPassword: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarStatus, setSnackbarStatus] = useState<ESnackbarStatus>(ESnackbarStatus.Success);
+  const [snackbarDetails, setSnackbarDetails] = useState({
+    message: "",
+    status: ESnackbarStatus.Success,
+  });
   const [passwords, setPasswords] = useState<IPasswordData>({
     oldPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [formErrors, setFormErrors] = useState<IPasswordData>({
     oldPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
   const { updateUser, logout } = useUsersContext();
@@ -67,17 +69,24 @@ export const ResetPassword: React.FC = () => {
     }
 
     try {
-      await mutation.mutateAsync({ hashPassword: passwords.newPassword, password: passwords.oldPassword});
-      setSnackbarMessage('Success reset password')
-      setSnackbarStatus(ESnackbarStatus.Success);
+      await mutation.mutateAsync({
+        hashPassword: passwords.newPassword,
+        password: passwords.oldPassword,
+      });
+      setSnackbarDetails({
+        message: "Success reset password",
+        status: ESnackbarStatus.Success,
+      });
       setSnackbarOpen(true);
       await mutationLogout.mutateAsync();
-      navigate('/login');
+      navigate("/login");
     } catch (error: unknown) {
       if (error instanceof AxiosError && error.response?.data?.message) {
         const errorMessage = error.response.data.message;
-        setSnackbarMessage(errorMessage);
-        setSnackbarStatus(ESnackbarStatus.Error);
+        setSnackbarDetails({
+          message: errorMessage,
+          status: ESnackbarStatus.Error,
+        });
         setSnackbarOpen(true);
       } else {
         console.error("Failed to reset password:", error);
@@ -123,7 +132,12 @@ export const ResetPassword: React.FC = () => {
           </div>
         </>
       )}
-      <AutohideSnackbar message={snackbarMessage} isOpen={snackbarOpen} onClose={setSnackbarOpen} status={snackbarStatus}/>
+      <AutohideSnackbar
+        message={snackbarDetails.message}
+        isOpen={snackbarOpen}
+        onClose={setSnackbarOpen}
+        status={snackbarDetails.status}
+      />
     </form>
-  )
-}
+  );
+};

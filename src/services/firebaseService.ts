@@ -3,7 +3,7 @@ import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from "fire
 const storage = getStorage();
 
 const handleSave = async (file: File) => {
-  if (!file) return; // Переконайтесь, що файл вибрано
+  if (!file) return;
 
   try {
     const storageRef = ref(storage, `avatars/${file.name}`);
