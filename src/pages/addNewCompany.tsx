@@ -6,7 +6,7 @@ import { Autocomplete, LoadScript } from "@react-google-maps/api";
 export const NewCompany: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [address, setAddress] = useState('');
-  const [_coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   // eslint-disable-next-line no-undef
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   
@@ -14,7 +14,7 @@ export const NewCompany: React.FC = () => {
   //   height: "400px",
   //   width: "800px"
   // };
-
+  console.log(coordinates);
   const GOOGLE_API_KEY = import.meta.env.VITE_API_KEY;
 
   const handleAddressChange = (event) => {

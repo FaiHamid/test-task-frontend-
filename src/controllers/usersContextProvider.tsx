@@ -74,6 +74,7 @@ export const UsersContextProvider: React.FC<Props> = ({ children }) => {
       handleEmailChange,
       updateUser,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentUser, email]
   );
 
