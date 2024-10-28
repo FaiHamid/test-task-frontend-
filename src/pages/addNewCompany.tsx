@@ -7,6 +7,9 @@ import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
 import { useMutation } from "@tanstack/react-query";
 import { companiesService } from "../services/companiesService";
 import { validateNewCompanyForm } from "../utils/validatationForms";
+import { useUsersContext } from "../controllers/useUsersContext";
+import { AxiosError } from "axios";
+import { AutohideSnackbar } from "../utils/snackBar";
 // import { useUsersContext } from "../controllers/useUsersContext";
 
 export const NewCompany: React.FC = () => {
@@ -27,16 +30,17 @@ export const NewCompany: React.FC = () => {
     capital: 0,
     latitude: "",
     longitude: "",
-    price: 0
+    price: 0,
   });
 
   const [formErrors, setFormErrors] = useState<Partial<ICompanyFormErrors>>({
     name: "",
     service: "",
     capital: "",
-    price: ""
+    price: "",
   });
 
+  const { currentUser } = useUsersContext();
   const GOOGLE_API_KEY = import.meta.env.VITE_API_KEY;
 
   const handleAddressChange = (
@@ -57,7 +61,7 @@ export const NewCompany: React.FC = () => {
         const location = place.geometry.location;
         const lat = location.lat();
         const lng = location.lng();
-        setCompanyData(prevCompany => ({
+        setCompanyData((prevCompany) => ({
           ...prevCompany,
           latitude: lat.toString(),
           longitude: lng.toString(),
@@ -67,16 +71,16 @@ export const NewCompany: React.FC = () => {
     }
   };
 
-  const changeCompanyState = (
-    newValue: string,
-    field: keyof ICompany
-  ) => {
+  const changeCompanyState = (newValue: string, field: keyof ICompany) => {
     if (Object.prototype.hasOwnProperty.call(formErrors, field)) {
       setFormErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
     }
-    if (field === 'price' || field === 'capital') {
+    if (field === "price" || field === "capital") {
       if (/^\d*$/.test(newValue)) {
-        setCompanyData((prevCompany) => ({ ...prevCompany, [field]: +newValue }));
+        setCompanyData((prevCompany) => ({
+          ...prevCompany,
+          [field]: +newValue,
+        }));
       } else {
         return;
       }
@@ -84,9 +88,15 @@ export const NewCompany: React.FC = () => {
     setCompanyData((prevCompany) => ({ ...prevCompany, [field]: newValue }));
   };
 
-  const mutation = useMutation<void, Error, ICompany>({
-    mutationFn: async (newUser) => {
-      await companiesService.addNewCompany(newUser);
+  const mutation = useMutation<void, Error>({
+    mutationFn: async () => {
+      if (currentUser) {
+        await companiesService.addNewCompany({
+          ...companyData,
+          idUser: currentUser?.id,
+        });
+      }
+
       return;
     },
     onSuccess: () => {},
@@ -95,7 +105,7 @@ export const NewCompany: React.FC = () => {
     },
   });
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const errors = validateNewCompanyForm(companyData);
     const hasErrors = Object.values(errors).some((error) => error !== "");
@@ -105,87 +115,113 @@ export const NewCompany: React.FC = () => {
       return;
     }
 
-  }
+    try {
+      await mutation.mutateAsync();
+      setSnackbarDetails({
+        message: "Success add company",
+        status: ESnackbarStatus.Success
+      });
+      setSnackbarOpen(true);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        const errorMessage = error.response.data.message;
+        setSnackbarDetails({
+          message: errorMessage,
+          status: ESnackbarStatus.Error,
+        });
+        setSnackbarOpen(true);
+      }
+    }
+  };
 
   return (
-    <form 
-      onSubmit={handleSubmit}
-      className="rounded-md bg-white p-10 border border-light-blue"
-    >
-      <p className="text-[36px] font-semibold mb-3">Add new company:</p>
-      <div className="flex items-center mb-10 relative">
-      <UploadAvatarOrLogo
-          previewURL={previewURL}
-          targetType={ETargetObject.Company}
-          selectedFile={selectedFile}
-          onChangePreviewURL={setPreviewURL}
-          onChangeSelectedFile={setSelectedFile}
-        />
-      </div>
-      <div className="max-w-[400px]">
-        <p className="mb-3 font-semibold">Name:</p>
-        <TextField
-          required
-          id="outlined-basic"
-          variant="outlined"
-          value={companyData.name}
-          placeholder="Enter company name"
-          onChange={(e) => changeCompanyState(e.target.value, "name")}
-          sx={{ mb: "25px", width: "100%" }}
-        />
+    <>
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-md bg-white p-10 border border-light-blue"
+      >
+        <p className="text-[36px] font-semibold mb-3">Add new company:</p>
+        <div className="flex items-center mb-10 relative">
+          <UploadAvatarOrLogo
+            previewURL={previewURL}
+            targetType={ETargetObject.Company}
+            selectedFile={selectedFile}
+            onChangePreviewURL={setPreviewURL}
+            onChangeSelectedFile={setSelectedFile}
+          />
+        </div>
+        <div className="max-w-[400px]">
+          <p className="mb-3 font-semibold">Name:</p>
+          <TextField
+            required
+            id="outlined-basic"
+            variant="outlined"
+            value={companyData.name}
+            placeholder="Enter company name"
+            onChange={(e) => changeCompanyState(e.target.value, "name")}
+            sx={{ mb: "25px", width: "100%" }}
+          />
 
-        <p className="mb-3 font-semibold">Service:</p>
-        <TextField
-          required
-          id="outlined-basic"
-          variant="outlined"
-          placeholder="Enter company service"
-          value={companyData.service}
-          onChange={(e) => changeCompanyState(e.target.value, "service")}
-          sx={{ mb: "35px", width: "100%" }}
-        />
+          <p className="mb-3 font-semibold">Service:</p>
+          <TextField
+            required
+            id="outlined-basic"
+            variant="outlined"
+            placeholder="Enter company service"
+            value={companyData.service}
+            onChange={(e) => changeCompanyState(e.target.value, "service")}
+            sx={{ mb: "35px", width: "100%" }}
+          />
 
-        <p className="mb-3 font-semibold">Capital:</p>
-        <TextField
-          required
-          id="outlined-basic"
-          variant="outlined"
-          value={companyData.capital}
-          onChange={(e) => changeCompanyState(e.target.value, "capital")}
-          sx={{ mb: "35px", width: "100%" }}
-        />
+          <p className="mb-3 font-semibold">Capital:</p>
+          <TextField
+            required
+            id="outlined-basic"
+            variant="outlined"
+            value={companyData.capital}
+            onChange={(e) => changeCompanyState(e.target.value, "capital")}
+            sx={{ mb: "35px", width: "100%" }}
+          />
 
-        <p className="mb-3 font-semibold">Price:</p>
-        <TextField
-          required
-          id="outlined-basic"
-          variant="outlined"
-          value={companyData.price}
-          onChange={(e) => changeCompanyState(e.target.value, "price")}
-          sx={{ mb: "35px", width: "100%" }}
-        />
+          <p className="mb-3 font-semibold">Price:</p>
+          <TextField
+            required
+            id="outlined-basic"
+            variant="outlined"
+            value={companyData.price}
+            onChange={(e) => changeCompanyState(e.target.value, "price")}
+            sx={{ mb: "35px", width: "100%" }}
+          />
 
-        <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={["places"]}>
-          <Autocomplete
-            onLoad={(autocomplete) => setAutocomplete(autocomplete)}
-            onPlaceChanged={handlePlaceSelect}
-          >
-            <>
-              <p className="mb-3 font-semibold">Address:</p>
-              <TextField
-                type="text"
-                value={address}
-                onChange={handleAddressChange}
-                placeholder="Enter address"
-                sx={{ mb: "35px", width: "100%" }}
-              />
-            </>
-          </Autocomplete>
-        </LoadScript>
-      </div>
-      <Button variant="contained" sx={{ mb: "50px" }} type="submit">
-        Save
-      </Button>
-    </form>
+          <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={["places"]}>
+            <Autocomplete
+              onLoad={(autocomplete) => setAutocomplete(autocomplete)}
+              onPlaceChanged={handlePlaceSelect}
+            >
+              <>
+                <p className="mb-3 font-semibold">Address:</p>
+                <TextField
+                  type="text"
+                  value={address}
+                  onChange={handleAddressChange}
+                  placeholder="Enter address"
+                  sx={{ mb: "35px", width: "100%" }}
+                />
+              </>
+            </Autocomplete>
+          </LoadScript>
+        </div>
+        <Button variant="contained" sx={{ mb: "50px" }} type="submit">
+          Save
+        </Button>
+      </form>
+
+      <AutohideSnackbar
+        message={snackbarDetails.message}
+        isOpen={snackbarOpen}
+        onClose={setSnackbarOpen}
+        status={snackbarDetails.status}
+      />
+    </>
   );
 };

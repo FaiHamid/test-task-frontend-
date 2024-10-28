@@ -1,15 +1,15 @@
-import { GoogleMap, Marker } from "@react-google-maps/api";
+// import { GoogleMap, Marker } from "@react-google-maps/api";
 import React from "react";
 
 export const Company: React.FC = () => {
-  const mapContainerStyle = {
-    height: "400px",
-    width: "800px",
-  };
+  // const mapContainerStyle = {
+  //   height: "400px",
+  //   width: "800px",
+  // };
 
   return (
     <div>
-      {coordinates && (
+      {/* {coordinates && (
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           center={coordinates}
@@ -17,7 +17,7 @@ export const Company: React.FC = () => {
         >
           <Marker position={coordinates} />
         </GoogleMap>
-      )}
+      )} */}
     </div>
   );
 };

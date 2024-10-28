@@ -59,6 +59,7 @@ export const UploadAvatarOrLogo: React.FC<Props> = ({
         setCurrentPicture(currentCompany?.logotype || 'https://i.imgur.com/5MRjPJ9.png');
         break;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
 
