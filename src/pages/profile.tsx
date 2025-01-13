@@ -1,20 +1,24 @@
 import React, { useState } from "react";
 import { Button, TextField } from "@mui/material";
-import { useUsersContext } from "../controllers/useUsersContext";
 import { LogoutComponent } from "../components/logoutComponent";
 import { ESnackbarStatus, EVariantLogout, IUserToChange } from "../types/User";
 import { firebaseService } from "../services/firebaseService";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AutohideSnackbar } from "../utils/snackBar";
 import { validateProfileForm } from "../utils/validatationForms";
 import { AxiosError } from "axios";
 import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
 import { ETargetObject } from "../types/Company";
+import { currentUserQuery } from "../reactQuery/userQuery";
+import { CustomLoader } from "../components/customLoader";
+import { userService } from "../services/userService";
+import { queryKeys } from "../reactQuery/queriesKey";
 
 export const Profile: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { currentUser, updateUser } = useUsersContext();
+  const { data: currentUser, isLoading } = useQuery(currentUserQuery);
+  const queryClient = useQueryClient();
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const [dataToChange, setDataToChange] = useState<IUserToChange>({
     name: currentUser?.name || "",
@@ -54,10 +58,12 @@ export const Profile: React.FC = () => {
 
   const mutationUser = useMutation<void, Error, Partial<IUserToChange>>({
     mutationFn: async (data: Partial<IUserToChange>) => {
-      await updateUser(data);
+      await userService.updateUser(currentUser!.id, data);
       return;
     },
-    onSuccess: () => {},
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKeys.getCurrentUser] });
+    },
     onError: (error) => {
       console.error("Save to db failed:", error);
     },
@@ -89,7 +95,7 @@ export const Profile: React.FC = () => {
         await mutation.mutateAsync();
         setSnackbarDetails({
           message: "Success change information",
-          status: ESnackbarStatus.Success
+          status: ESnackbarStatus.Success,
         });
         setSnackbarOpen(true);
         dataToReq.avatar = previewURL || "";
@@ -99,7 +105,7 @@ export const Profile: React.FC = () => {
           const errorMessage = error.response.data.message;
           setSnackbarDetails({
             message: errorMessage,
-            status: ESnackbarStatus.Error
+            status: ESnackbarStatus.Error,
           });
           setSnackbarOpen(true);
         }
@@ -121,7 +127,7 @@ export const Profile: React.FC = () => {
       setSelectedFile(null);
       setSnackbarDetails({
         message: "Success change information",
-        status: ESnackbarStatus.Success
+        status: ESnackbarStatus.Success,
       });
       setSnackbarOpen(true);
     } catch (error) {
@@ -129,7 +135,7 @@ export const Profile: React.FC = () => {
         const errorMessage = error.response.data.message;
         setSnackbarDetails({
           message: errorMessage,
-          status: ESnackbarStatus.Error
+          status: ESnackbarStatus.Error,
         });
         setSnackbarOpen(true);
       }
@@ -144,10 +150,14 @@ export const Profile: React.FC = () => {
     setDataToChange((prevUser) => ({ ...prevUser, [field]: newValue }));
   };
 
+  if (isLoading) {
+    <CustomLoader loaderSize={30} paddingY={50} />;
+  }
+
   return (
     <div className="rounded-md bg-white p-10 border border-light-blue">
       <div className="flex items-center mb-10 relative">
-        <UploadAvatarOrLogo 
+        <UploadAvatarOrLogo
           previewURL={previewURL}
           targetType={ETargetObject.User}
           selectedFile={selectedFile}

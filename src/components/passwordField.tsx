@@ -1,16 +1,15 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material"
 import { FormControl, FormHelperText, IconButton, InputAdornment, InputLabel, OutlinedInput } from "@mui/material"
 import React, { useState } from "react"
+import { UseFormRegisterReturn } from "react-hook-form";
 
-interface Props<T> {
-  value: string;
-  errorValue: string;
-  field: keyof T;
+interface Props {
+  errorValue: { message?: string};
   label: string;
-  onChangeValue: (newValue: string, field: keyof T) => void; 
+  registerProps: UseFormRegisterReturn<string>;
 }
 
-export const PasswordField = <T,>({ value, errorValue, field, label, onChangeValue }: Props<T>) => {
+export const PasswordField: React.FC<Props> = ({ errorValue, label, registerProps }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleClickShowPassword = () => {
@@ -35,10 +34,7 @@ export const PasswordField = <T,>({ value, errorValue, field, label, onChangeVal
     <OutlinedInput
       id="outlined-adornment-password"
       type={showPassword ? "text" : "password"}
-      value={value}
-      onChange={(e) =>
-        onChangeValue(e.target.value, field)
-      }
+      {...registerProps}
       endAdornment={
         <InputAdornment position="end">
           <IconButton
@@ -54,7 +50,7 @@ export const PasswordField = <T,>({ value, errorValue, field, label, onChangeVal
       label={label}
     />
     {errorValue && (
-      <FormHelperText>{errorValue}</FormHelperText>
+      <FormHelperText>{errorValue.message}</FormHelperText>
     )}
   </FormControl>
   )

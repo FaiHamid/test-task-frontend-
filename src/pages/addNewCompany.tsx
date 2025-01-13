@@ -4,15 +4,16 @@ import { Autocomplete, LoadScript } from "@react-google-maps/api";
 import { ETargetObject, ICompany, ICompanyFormErrors } from "../types/Company";
 import { ESnackbarStatus } from "../types/User";
 import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { companiesService } from "../services/companiesService";
 import { validateNewCompanyForm } from "../utils/validatationForms";
-import { useUsersContext } from "../controllers/useUsersContext";
 import { AxiosError } from "axios";
 import { AutohideSnackbar } from "../utils/snackBar";
-// import { useUsersContext } from "../controllers/useUsersContext";
+import { currentUserQuery } from "../reactQuery/userQuery";
+import { CustomLoader } from "../components/customLoader";
 
 export const NewCompany: React.FC = () => {
+  const { data: currentUser, isLoading } = useQuery(currentUserQuery);
   const [address, setAddress] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
@@ -40,7 +41,6 @@ export const NewCompany: React.FC = () => {
     price: "",
   });
 
-  const { currentUser } = useUsersContext();
   const GOOGLE_API_KEY = import.meta.env.VITE_API_KEY;
 
   const handleAddressChange = (
@@ -133,6 +133,10 @@ export const NewCompany: React.FC = () => {
       }
     }
   };
+
+      if (isLoading) {
+        <CustomLoader loaderSize={30} paddingY={50}/>
+      }
 
   return (
     <>

@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { Menu, MenuItem } from '@mui/material';
 import { Avatar } from './avatar';
 import { useNavigate } from 'react-router-dom';
-import { useUsersContext } from '../controllers/useUsersContext';
 import { LogoutComponent } from './logoutComponent';
 import { EVariantLogout } from '../types/User';
-// import { mutationService } from '../services/mutationService';
+import { CustomLoader } from './customLoader';
+import { useQuery } from '@tanstack/react-query';
+import { currentUserQuery } from '../reactQuery/userQuery';
 
 export const DropdownMenu: React.FC = () => {
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { data: currentUser, isLoading } = useQuery(currentUserQuery);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
-  const { currentUser } = useUsersContext();
   
 
-  const handleClick = (event) => {
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget); 
   };
 
@@ -29,6 +30,10 @@ export const DropdownMenu: React.FC = () => {
   const handleLogout = async() => {
     handleClose(); 
   };
+
+      if (isLoading) {
+        <CustomLoader loaderSize={30} paddingY={50}/>
+      }
 
   return (
     <div>

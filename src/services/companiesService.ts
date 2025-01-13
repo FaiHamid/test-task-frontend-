@@ -7,4 +7,10 @@ export const addNewCompany = async (companyData: ICompany): Promise<ICompanyResp
   return resp;
 }
 
-export const companiesService = { addNewCompany };
+export const getCompanies = async (): Promise<ICompanyResponse[]> => {
+  const resp = await useHttp.get<void, ICompanyResponse[]>('/companies');
+
+  return resp;
+}
+
+export const companiesService = { addNewCompany, getCompanies };

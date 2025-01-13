@@ -1,33 +1,37 @@
-import React, { useState } from "react";
 import { Button, TextField } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { IUserLogin } from "../types/User";
-import { useUsersContext } from "../controllers/useUsersContext";
+import { IUserLogin, IUserRespons } from "../types/User";
 import { CustomLoader } from "../components/customLoader";
 import { PasswordField } from "../components/passwordField";
-import { validateLoginForm } from "../utils/validatationForms";
+import { authService } from "../services/authService";
+import { accessTokenService } from "../services/accessTokenService";
+import { useForm } from "react-hook-form";
+import { emailPattern } from "../utils/emqilPattern";
 
-export const Login: React.FunctionComponent = () => {
-  const [currentUser, setCurrentUser] = useState<IUserLogin>({
-    email: "",
-    password: "",
-  });
-  const [formErrors, setFormErrors] = useState<IUserLogin>({
-    email: "",
-    password: "",
-  });
-  const { login } = useUsersContext();
+export const Login = () => {
+    const {
+      register,
+      handleSubmit,
+      reset,
+      formState: { errors },
+    } = useForm<IUserLogin>({
+      mode: "onBlur",
+      criteriaMode: "all",
+      defaultValues: {
+        email: "",
+        password: "",
+      },
+    });
+  
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const mutation = useMutation<void, Error>({
-    mutationFn: async () => {
-      await login(currentUser as IUserLogin);
-
-      return;
-    },
-    onSuccess: () => {
+  const mutation = useMutation<IUserRespons, Error, IUserLogin>({
+    mutationFn: async (currentUser) => (await authService.login(currentUser)),
+    onSuccess: (data) => {
+      const { accessToken } = data;
+      accessTokenService.save(accessToken);
       navigate(state.pathname || "/companies", { replace: true });
     },
     onError: (error) => {
@@ -35,33 +39,16 @@ export const Login: React.FunctionComponent = () => {
     },
   });
 
-  const resetErrors = () => {
-    setFormErrors({
-      email: "",
-      password: "",
-    });
-  };
 
-  const changeUserState = (newValue: string, field: keyof IUserLogin) => {
-    if (formErrors[field]) {
-      setFormErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
-    }
-    setCurrentUser((prevUser) => ({ ...prevUser, [field]: newValue }));
-  };
+  const handleLogin = async (data: IUserLogin) => {
 
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const errors = validateLoginForm(currentUser);
-    const hasErrors = Object.values(errors).some((error) => error !== "");
-    setFormErrors(errors);
-
-    if (hasErrors) {
+    if (errors) {
       return;
     }
 
     try {
-      await mutation.mutateAsync();
-      resetErrors();
+      await mutation.mutateAsync(data);
+      reset();
     } catch (error) {
       console.error("Failed to login user:", error);
     }
@@ -69,7 +56,7 @@ export const Login: React.FunctionComponent = () => {
 
   return (
     <form
-      onSubmit={handleLogin}
+      onSubmit={handleSubmit(handleLogin)}
       className="max-w-[600px] bg-white mx-auto flex flex-col py-7 px-16 rounded-lg mt-5 border border-light-gray"
     >
       {mutation.isPending ? (
@@ -81,18 +68,21 @@ export const Login: React.FunctionComponent = () => {
             id="outlined-basic"
             label="Email"
             variant="outlined"
-            error={!!formErrors.email}
-            helperText={formErrors.email}
-            value={currentUser.email}
-            onChange={(e) => changeUserState(e.target.value, "email")}
+            error={!!errors.email}
+            helperText={errors.email && errors.email.message}
+            {...register("email",{
+              required: "Email is required",
+              pattern: emailPattern,
+            })}
             sx={{ mb: "12px", width: "100%" }}
           />
-          <PasswordField<IUserLogin>
-            value={currentUser.password}
-            errorValue={formErrors.password}
-            field="password"
+          <PasswordField
+            errorValue={errors.password || {}}
             label="Password"
-            onChangeValue={changeUserState}
+            registerProps={register("password", {
+              required: "Password is required",
+              minLength: { value: 6, message: "Password must be at least 6 characters" },
+            })}
           />
           <div className="flex justify-between mt-5">
             <Button variant="contained" type="submit">

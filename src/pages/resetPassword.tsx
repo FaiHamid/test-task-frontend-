@@ -3,81 +3,85 @@ import { CustomLoader } from "../components/customLoader";
 import { PasswordField } from "../components/passwordField";
 import { ESnackbarStatus, IPasswordData, IUserToChange } from "../types/User";
 import { Button } from "@mui/material";
-import { validateResetPasswordForm } from "../utils/validatationForms";
-import { useMutation } from "@tanstack/react-query";
-import { useUsersContext } from "../controllers/useUsersContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { AutohideSnackbar } from "../utils/snackBar";
 import { useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
+import { accessTokenService } from "../services/accessTokenService";
+import { userService } from "../services/userService";
+import { currentUserQuery } from "../reactQuery/userQuery";
+import { queryKeys } from "../reactQuery/queriesKey";
+import { useForm } from "react-hook-form";
 
 export const ResetPassword: React.FC = () => {
+  const { data: currentUser, isLoading } = useQuery(currentUserQuery);
+  const queryClient = useQueryClient();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarDetails, setSnackbarDetails] = useState({
     message: "",
     status: ESnackbarStatus.Success,
   });
-  const [passwords, setPasswords] = useState<IPasswordData>({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [formErrors, setFormErrors] = useState<IPasswordData>({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<IPasswordData>({
+    mode: "onBlur",
+    criteriaMode: "all",
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
 
-  const { updateUser, logout } = useUsersContext();
   const navigate = useNavigate();
-
-  const changeUserState = (newValue: string, field: keyof IPasswordData) => {
-    if (formErrors[field]) {
-      setFormErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
-    }
-    setPasswords((prevUser) => ({ ...prevUser, [field]: newValue }));
-  };
 
   const mutation = useMutation<void, Error, Partial<IUserToChange>>({
     mutationFn: async (data: Partial<IUserToChange>) => {
-      await updateUser(data);
+      await userService.updateUser(currentUser!.id, data);
       return;
     },
-    onSuccess: () => {},
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKeys.getCurrentUser] });
+    },
     onError: () => {},
   });
 
   const mutationLogout = useMutation<void, Error>({
     mutationFn: async () => {
-      await logout();
+      await authService.logout();
 
       return;
+    },
+    onSuccess: () => {
+      accessTokenService.remove();
     },
     onError: (error) => {
       console.error("Logout failed:", error);
     },
   });
 
-  const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleReset = async (data: IPasswordData) => {
 
-    const errors = validateResetPasswordForm(passwords);
-    const hasErrors = Object.values(errors).some((error) => error !== "");
-    setFormErrors(errors);
-
-    if (hasErrors) {
+    if (errors) {
       return;
     }
 
     try {
       await mutation.mutateAsync({
-        hashPassword: passwords.newPassword,
-        password: passwords.oldPassword,
+        hashPassword: data.newPassword,
+        password: data.oldPassword,
       });
       setSnackbarDetails({
         message: "Success reset password",
         status: ESnackbarStatus.Success,
       });
       setSnackbarOpen(true);
+      reset();
       await mutationLogout.mutateAsync();
       navigate("/login");
     } catch (error: unknown) {
@@ -94,9 +98,13 @@ export const ResetPassword: React.FC = () => {
     }
   };
 
+  if (isLoading) {
+    <CustomLoader loaderSize={30} paddingY={50} />;
+  }
+
   return (
     <form
-      onSubmit={handleReset}
+      onSubmit={handleSubmit(handleReset)}
       className="max-w-[600px] bg-white mx-auto flex flex-col py-7 px-16 rounded-lg mt-5 border border-light-gray"
     >
       {mutation.isPending ? (
@@ -104,26 +112,29 @@ export const ResetPassword: React.FC = () => {
       ) : (
         <>
           <h1 className="text-[24px] mb-5">Reset password:</h1>
-          <PasswordField<IPasswordData>
-            value={passwords.oldPassword}
-            errorValue={formErrors.oldPassword}
-            field="oldPassword"
+          <PasswordField
+            errorValue={errors.oldPassword || {}}
             label="Old password"
-            onChangeValue={changeUserState}
+            registerProps={register("oldPassword", {
+              required: "oldPassword is required",
+              minLength: { value: 6, message: "oldPassword must be at least 6 characters" },
+            })}
           />
-          <PasswordField<IPasswordData>
-            value={passwords.newPassword}
-            errorValue={formErrors.newPassword}
-            field="newPassword"
+          <PasswordField
+            errorValue={errors.newPassword || {}}
             label="New password"
-            onChangeValue={changeUserState}
+            registerProps={register("newPassword", {
+              required: "newPassword is required",
+              minLength: { value: 6, message: "newPassword must be at least 6 characters" },
+            })}
           />
-          <PasswordField<IPasswordData>
-            value={passwords.confirmPassword}
-            errorValue={formErrors.confirmPassword}
-            field="confirmPassword"
-            label="Confirm password"
-            onChangeValue={changeUserState}
+          <PasswordField
+            errorValue={errors.confirmPassword || {}}
+            label="ConfirmPassword password"
+            registerProps={register("confirmPassword", {
+              required: "confirmPassword is required",
+              minLength: { value: 6, message: "confirmPassword must be at least 6 characters" },
+            })}
           />
           <div className="flex justify-between mt-5">
             <Button variant="contained" type="submit">

@@ -2,19 +2,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { CustomLoader } from "./customLoader";
 import { UserWithoutToken } from "../types/User";
-import { useUsersContext } from "../controllers/useUsersContext";
+import { authService } from "../services/authService";
+import { accessTokenService } from "../services/accessTokenService";
 
 export const ActivateMessage = () => {
   const { activatedToken } = useParams<{ activatedToken: string }>();
   const navigate = useNavigate();
-  const { activate } = useUsersContext();
 
-  const getResponse = async () => {
+  const getResponse = async (): Promise<UserWithoutToken> => {
     if (!activatedToken) {
       throw new Error("No activation token provided");
     }
 
-    return await activate(activatedToken);
+    const { accessToken, ...user } = await authService.activate(activatedToken);
+    accessTokenService.save(accessToken);
+
+    return user;
   };
 
   const { error, isLoading, isSuccess } = useQuery<UserWithoutToken, Error>({

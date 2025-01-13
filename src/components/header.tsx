@@ -1,13 +1,18 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useUsersContext } from "../controllers/useUsersContext";
 import { DropdownMenu } from "./dropDownMenu";
 import { Button } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { currentUserQuery } from "../reactQuery/userQuery";
+import { CustomLoader } from "./customLoader";
 
 export const Header: React.FunctionComponent = () => {
-  const { currentUser } = useUsersContext();
+  const { data: currentUser, isLoading } = useQuery(currentUserQuery);
   const navigate = useNavigate();
-  console.log("currentUser", currentUser);
+
+  if (isLoading) {
+    <CustomLoader loaderSize={30} paddingY={50} />;
+  }
 
   return (
     <header className="h-22 w-full bg-white shadow-lg p-5 px-10 flex justify-between mb-5 items-center">
