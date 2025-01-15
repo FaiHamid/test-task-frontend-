@@ -26,6 +26,7 @@ export const ResetPassword: React.FC = () => {
   const {
     register,
     handleSubmit,
+    watch,
     reset,
     formState: { errors },
   } = useForm<IPasswordData>({
@@ -116,8 +117,8 @@ export const ResetPassword: React.FC = () => {
             errorValue={errors.oldPassword || {}}
             label="Old password"
             registerProps={register("oldPassword", {
-              required: "oldPassword is required",
-              minLength: { value: 6, message: "oldPassword must be at least 6 characters" },
+              required: "Old password is required",
+              minLength: { value: 6, message: "Old password must be at least 6 characters" },
             })}
           />
           <PasswordField
@@ -125,7 +126,7 @@ export const ResetPassword: React.FC = () => {
             label="New password"
             registerProps={register("newPassword", {
               required: "newPassword is required",
-              minLength: { value: 6, message: "newPassword must be at least 6 characters" },
+              minLength: { value: 6, message: "Password must be at least 6 characters" },
             })}
           />
           <PasswordField
@@ -133,7 +134,10 @@ export const ResetPassword: React.FC = () => {
             label="ConfirmPassword password"
             registerProps={register("confirmPassword", {
               required: "confirmPassword is required",
-              minLength: { value: 6, message: "confirmPassword must be at least 6 characters" },
+              validate: (value) => {
+                const password = watch("newPassword");
+                return value === password || `Passwords must match: ${password}`;
+              }
             })}
           />
           <div className="flex justify-between mt-5">

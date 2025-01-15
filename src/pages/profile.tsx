@@ -6,7 +6,6 @@ import { firebaseService } from "../services/firebaseService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AutohideSnackbar } from "../utils/snackBar";
-import { validateProfileForm } from "../utils/validatationForms";
 import { AxiosError } from "axios";
 import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
 import { ETargetObject } from "../types/Company";
@@ -14,33 +13,32 @@ import { currentUserQuery } from "../reactQuery/userQuery";
 import { CustomLoader } from "../components/customLoader";
 import { userService } from "../services/userService";
 import { queryKeys } from "../reactQuery/queriesKey";
+import { useForm } from "react-hook-form";
 
 export const Profile: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { data: currentUser, isLoading } = useQuery(currentUserQuery);
   const queryClient = useQueryClient();
   const [previewURL, setPreviewURL] = useState<string | null>(null);
-  const [dataToChange, setDataToChange] = useState<IUserToChange>({
-    name: currentUser?.name || "",
-    surname: currentUser?.surname || "",
-  });
-  const [formErrors, setFormErrors] = useState<IUserToChange>({
-    name: "",
-    surname: "",
-  });
+      const {
+        register,
+        handleSubmit,
+        formState: { errors },
+      } = useForm<IUserToChange>({
+        mode: "onBlur",
+        criteriaMode: "all",
+        defaultValues: {
+          name: currentUser?.name || "",
+          surname: currentUser?.surname || "",
+        },
+      });
+    
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarDetails, setSnackbarDetails] = useState({
     message: "",
     status: ESnackbarStatus.Success,
   });
   const navigate = useNavigate();
-
-  const resetErrors = () => {
-    setFormErrors({
-      name: "",
-      surname: "",
-    });
-  };
 
   const mutation = useMutation<void, Error>({
     mutationFn: async () => {
@@ -69,22 +67,17 @@ export const Profile: React.FC = () => {
     },
   });
 
-  const handleSaveData = async () => {
+  const handleSaveData = async (data: IUserToChange) => {
     if (
-      currentUser?.name === dataToChange.name &&
-      currentUser?.surname === dataToChange.surname &&
+      currentUser?.name === data.name &&
+      currentUser?.surname === data.surname &&
       !previewURL
     ) {
       console.log("nothing change");
       return;
     }
 
-    const errors = validateProfileForm(dataToChange);
-
-    const hasErrors = Object.values(errors).some((error) => error !== "");
-    setFormErrors(errors);
-
-    if (hasErrors) {
+    if (errors) {
       return;
     }
 
@@ -99,7 +92,6 @@ export const Profile: React.FC = () => {
         });
         setSnackbarOpen(true);
         dataToReq.avatar = previewURL || "";
-        resetErrors();
       } catch (error: unknown) {
         if (error instanceof AxiosError && error.response?.data?.message) {
           const errorMessage = error.response.data.message;
@@ -113,12 +105,12 @@ export const Profile: React.FC = () => {
       }
     }
 
-    if (currentUser?.name !== dataToChange.name) {
-      dataToReq.name = dataToChange.name;
+    if (currentUser?.name !== data.name) {
+      dataToReq.name = data.name;
     }
 
-    if (currentUser?.surname !== dataToChange.surname) {
-      dataToReq.surname = dataToChange.surname;
+    if (currentUser?.surname !== data.surname) {
+      dataToReq.surname = data.surname;
     }
     console.log("dataToReq", dataToReq);
     try {
@@ -143,13 +135,6 @@ export const Profile: React.FC = () => {
     }
   };
 
-  const changeUserState = (newValue: string, field: keyof IUserToChange) => {
-    if (formErrors[field]) {
-      setFormErrors((prevErrors) => ({ ...prevErrors, [field]: "" }));
-    }
-    setDataToChange((prevUser) => ({ ...prevUser, [field]: newValue }));
-  };
-
   if (isLoading) {
     <CustomLoader loaderSize={30} paddingY={50} />;
   }
@@ -172,16 +157,18 @@ export const Profile: React.FC = () => {
         </div>
       </div>
       <p className="text-[28px] font-semibold mb-5">Personal Data:</p>
+      <form onSubmit={handleSubmit(handleSaveData)}></form>
       <div className="max-w-[400px]">
         <p className="mb-3 font-semibold">Name:</p>
         <TextField
           required
           id="outlined-basic"
           variant="outlined"
-          value={dataToChange.name}
-          error={!!formErrors.name}
-          helperText={formErrors.name}
-          onChange={(e) => changeUserState(e.target.value, "name")}
+          error={!!errors.name}
+          helperText={errors.name && errors.name.message}
+          {...register("name", {
+            required: "Name is required",
+          })}
           sx={{ mb: "25px", width: "100%" }}
         />
         <p className="mb-3 font-semibold">Surname:</p>
@@ -189,10 +176,11 @@ export const Profile: React.FC = () => {
           required
           id="outlined-basic"
           variant="outlined"
-          value={dataToChange.surname}
-          error={!!formErrors.surname}
-          helperText={formErrors.surname}
-          onChange={(e) => changeUserState(e.target.value, "surname")}
+          error={!!errors.surname}
+          helperText={errors.surname && errors.surname.message}
+          {...register("surname", {
+            required: "Surname is required",
+          })}
           sx={{ mb: "35px", width: "100%" }}
         />
       </div>
@@ -200,7 +188,7 @@ export const Profile: React.FC = () => {
         <Button
           variant="contained"
           sx={{ mb: "50px" }}
-          onClick={handleSaveData}
+          type="submit"
         >
           Save
         </Button>

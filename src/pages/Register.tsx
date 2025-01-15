@@ -7,12 +7,13 @@ import { CustomLoader } from "../components/customLoader";
 import { PasswordField } from "../components/passwordField";
 
 import { useForm } from "react-hook-form";
-import { emailPattern } from "../utils/emqilPattern";
+import { emailPattern } from "../utils/emailPattern";
 
 export const Register = () => {
   const {
     register,
     handleSubmit,
+    watch,
     reset,
     formState: { errors },
   } = useForm<IUser>({
@@ -118,10 +119,10 @@ export const Register = () => {
             label="Confirm Password"
             registerProps={register("confirmPassword", {
               required: "Confirm Password is required",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters",
-              },
+              validate: (value) => {
+                const password = watch("password");
+                return value === password || `Passwords must match: ${password}`;
+              }
             })}
           />
           <div>

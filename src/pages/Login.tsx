@@ -7,7 +7,7 @@ import { PasswordField } from "../components/passwordField";
 import { authService } from "../services/authService";
 import { accessTokenService } from "../services/accessTokenService";
 import { useForm } from "react-hook-form";
-import { emailPattern } from "../utils/emqilPattern";
+import { emailPattern } from "../utils/emailPattern";
 
 export const Login = () => {
     const {

@@ -1,8 +1,8 @@
 import React from "react";
-import { ICompany } from "../types/Company";
+import { ICompanyResponse } from "../types/Company";
 
 interface Props {
-  company: ICompany;
+  company: ICompanyResponse;
 }
 
 export const CompanyItem: React.FC<Props> = ({ company }) => {

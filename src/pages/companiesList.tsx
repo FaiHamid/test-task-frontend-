@@ -1,49 +1,54 @@
 import React, { useState } from "react";
-import companies from "../tempCompanies.json";
-import { CompanyItem } from "../components/companyItem";
-import { ICompany } from "../types/Company";
 import { PaginationComponent } from "../components/pagination";
 import {
   FormControl,
   FormHelperText,
   MenuItem,
   Select,
-  Slider,
   Typography,
 } from "@mui/material";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
+import { useQuery } from "@tanstack/react-query";
+import { companiesQuery } from "../reactQuery/companiesQuery";
+import { CustomLoader } from "../components/customLoader";
+import { CompanyItem } from "../components/companyItem";
 
-const valuetext = (value) => {
-  return `${value}`;
-};
+// const valuetext = (value) => {
+//   return `${value}`;
+// };
 
 export const CompaniesList: React.FC = () => {
   const [page, setPage] = useState(1);
   const companiesPerPage = 6;
-  const [visibleCompanies, setVisibleCompanies] = useState<ICompany[]>(
-    companies.slice(0, companiesPerPage)
-  );
-  const [capitalRange, setCapitalRange] = useState([20000, 1000000]);
-  const [createdRange, setCreatedRange] = useState([
-    1980,
-    new Date().getFullYear(),
-  ]);
-  const amountOfPages = Math.ceil(companies.length / companiesPerPage);
+  const { data: companies, isLoading } = useQuery(companiesQuery);
+  // const [visibleCompanies, setVisibleCompanies] = useState<ICompanyResponse[]>(
+  // companies.slice(0, companiesPerPage)
+  // );
+  // const [capitalRange, setCapitalRange] = useState([20000, 1000000]);
+  // const [createdRange, setCreatedRange] = useState([
+  //   1980,
+  //   new Date().getFullYear(),
+  // ]);
+  const amountOfPages = companies && Math.ceil(companies.length / companiesPerPage) || 1;
 
   const handleChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
-    const firstIndex = (value - 1) * companiesPerPage;
-    const lastIndex = firstIndex + companiesPerPage;
-    setVisibleCompanies(companies.slice(firstIndex, lastIndex));
+    // const firstIndex = (value - 1) * companiesPerPage;
+    // const lastIndex = firstIndex + companiesPerPage;
+    // setVisibleCompanies(companies.slice(firstIndex, lastIndex));
   };
-  const handleCapitalChange = (event, newValue) => {
-    setCapitalRange(newValue);
-  };
+  // const handleCapitalChange = (event, newValue) => {
+  //   setCapitalRange(newValue);
+  // };
 
-  const handleCreatedChange = (event, newValue) => {
-    setCreatedRange(newValue);
-  };
+  // const handleCreatedChange = (event, newValue) => {
+  //   setCreatedRange(newValue);
+  // };
+
+  if (isLoading) {
+    <CustomLoader loaderSize={30} paddingY={50} />;
+  }
 
   return (
     <>
@@ -77,7 +82,7 @@ export const CompaniesList: React.FC = () => {
         <div className="flex flex-wrap mr-5">
           <div className="flex flex-col flex-wrap mr-10">
             <Typography gutterBottom>Capital Range:</Typography>
-            <Slider
+            {/* <Slider
               getAriaLabel={() => "Capital range"}
               value={capitalRange}
               onChange={handleCapitalChange}
@@ -88,12 +93,12 @@ export const CompaniesList: React.FC = () => {
               min={20000}
               max={1000000}
               sx={{ minWidth: "200px" }}
-            />
+            /> */}
           </div>
 
           <div className="flex flex-col flex-wrap mr-10">
             <Typography gutterBottom>Created Year Range:</Typography>
-            <Slider
+            {/* <Slider
               getAriaLabel={() => "Created range"}
               value={createdRange}
               onChange={handleCreatedChange}
@@ -102,7 +107,7 @@ export const CompaniesList: React.FC = () => {
               min={1980}
               max={new Date().getFullYear()}
               sx={{ minWidth: "300px" }}
-            />
+            /> */}
           </div>
         </div>
       </div>
@@ -118,7 +123,7 @@ export const CompaniesList: React.FC = () => {
           <p className="truncate font-poppins font-semibold">Capital</p>
           <p className="truncate font-poppins font-semibold">Created date</p>
         </div>
-        {visibleCompanies.map((company) => {
+        {companies && companies.map((company) => {
           return <CompanyItem company={company} key={company.id}/>;
         })}
       </div>

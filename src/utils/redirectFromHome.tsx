@@ -6,7 +6,7 @@ import { CustomLoader } from "../components/customLoader";
 
 export const RedirectFromHome: React.FC = () => {
   const { data: currentUser, isLoading } = useQuery(currentUserQuery);
-  console.log('hi')
+
   if (isLoading) {
     <CustomLoader loaderSize={30} paddingY={50} />;
   }
