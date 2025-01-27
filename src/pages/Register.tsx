@@ -44,7 +44,7 @@ export const Register = () => {
   });
 
   const handleRegisterUser = async (data: IUser) => {
-    if (errors) {
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
@@ -104,7 +104,7 @@ export const Register = () => {
             sx={{ mb: "12px", width: "100%" }}
           />
           <PasswordField
-            errorValue={errors.password || {}}
+            errorValue={errors.password}
             label="Password"
             registerProps={register("password", {
               required: "Password is required",
@@ -115,7 +115,7 @@ export const Register = () => {
             })}
           />
           <PasswordField
-            errorValue={errors.confirmPassword || {}}
+            errorValue={errors.confirmPassword}
             label="Confirm Password"
             registerProps={register("confirmPassword", {
               required: "Confirm Password is required",

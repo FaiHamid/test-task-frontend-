@@ -5,13 +5,20 @@ import { accessTokenService } from "../services/accessTokenService";
 
 export const currentUserQuery = queryOptions({
   queryKey: [queryKeys.getCurrentUser],
-  queryFn: () => {
+  queryFn: async () => {
     const token = accessTokenService.get();
 
     if (token) {
-      return userService.getUser(token);
+      try {
+        const resp = await userService.getUser(token);
+
+        return resp;
+      } catch (error) {
+        console.log("somethig went wrong", error);
+        return null;
+      }
     }
 
-    return undefined;
+    return null;
   },
 });

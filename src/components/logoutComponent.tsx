@@ -22,6 +22,7 @@ export const LogoutComponent: React.FC<Props> = ({ variant, handleClick }) => {
     },
     onSuccess: () => {
       accessTokenService.remove();
+      navigate('/login');
     },
     onError: (error) => {
       console.error("Logout failed:", error);
@@ -32,7 +33,7 @@ export const LogoutComponent: React.FC<Props> = ({ variant, handleClick }) => {
     try {
       await mutation.mutateAsync();
       handleClick();
-      navigate("/login");
+      console.log('hi logout')
     } catch {
       throw new Error("Something went wrong");
     }

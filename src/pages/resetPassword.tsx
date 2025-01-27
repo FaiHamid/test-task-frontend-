@@ -68,7 +68,7 @@ export const ResetPassword: React.FC = () => {
 
   const handleReset = async (data: IPasswordData) => {
 
-    if (errors) {
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
@@ -114,7 +114,7 @@ export const ResetPassword: React.FC = () => {
         <>
           <h1 className="text-[24px] mb-5">Reset password:</h1>
           <PasswordField
-            errorValue={errors.oldPassword || {}}
+            errorValue={errors.oldPassword}
             label="Old password"
             registerProps={register("oldPassword", {
               required: "Old password is required",
@@ -122,7 +122,7 @@ export const ResetPassword: React.FC = () => {
             })}
           />
           <PasswordField
-            errorValue={errors.newPassword || {}}
+            errorValue={errors.newPassword}
             label="New password"
             registerProps={register("newPassword", {
               required: "newPassword is required",
@@ -130,7 +130,7 @@ export const ResetPassword: React.FC = () => {
             })}
           />
           <PasswordField
-            errorValue={errors.confirmPassword || {}}
+            errorValue={errors.confirmPassword}
             label="ConfirmPassword password"
             registerProps={register("confirmPassword", {
               required: "confirmPassword is required",

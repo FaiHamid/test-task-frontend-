@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { accessTokenService } from '../services/accessTokenService';
-import { authService } from '../services/authService';
+// import { authService } from '../services/authService';
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL || '',
@@ -21,24 +21,23 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   res => res.data,
   async error => {
-    const originalRequest = error.config;
+    // const originalRequest = error.config;
 
-    if (error.response.status !== 401) {
+  // if (error.response.status !== 401) {
     throw error;
-  }
+  // }
 
-  // eslint-disable-next-line no-useless-catch
-  try {
-    const { accessToken } = await authService.refresh();
+  // try {
+  //   const { accessToken } = await authService.refresh();
 
-    accessTokenService.save(accessToken);
+  //   accessTokenService.save(accessToken);
 
-    return instance.request(originalRequest);
-  } catch (error) {
-    throw error;
-  }
+  //   return instance.request(originalRequest);
+  // } catch (error) {
+  //   throw error;
+  // }
   
   }
 )
 
-export const useHttp = instance
+export const useHttp = instance;

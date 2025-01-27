@@ -20,19 +20,19 @@ export const Profile: React.FC = () => {
   const { data: currentUser, isLoading } = useQuery(currentUserQuery);
   const queryClient = useQueryClient();
   const [previewURL, setPreviewURL] = useState<string | null>(null);
-      const {
-        register,
-        handleSubmit,
-        formState: { errors },
-      } = useForm<IUserToChange>({
-        mode: "onBlur",
-        criteriaMode: "all",
-        defaultValues: {
-          name: currentUser?.name || "",
-          surname: currentUser?.surname || "",
-        },
-      });
-    
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<IUserToChange>({
+    mode: "onBlur",
+    criteriaMode: "all",
+    defaultValues: {
+      name: currentUser?.name || "",
+      surname: currentUser?.surname || "",
+    },
+  });
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarDetails, setSnackbarDetails] = useState({
     message: "",
@@ -77,7 +77,7 @@ export const Profile: React.FC = () => {
       return;
     }
 
-    if (errors) {
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
@@ -136,75 +136,80 @@ export const Profile: React.FC = () => {
   };
 
   if (isLoading) {
-    <CustomLoader loaderSize={30} paddingY={50} />;
+    return <CustomLoader loaderSize={50} paddingY={70} />;
   }
 
   return (
-    <div className="rounded-md bg-white p-10 border border-light-blue">
-      <div className="flex items-center mb-10 relative">
-        <UploadAvatarOrLogo
-          previewURL={previewURL}
-          targetType={ETargetObject.User}
-          selectedFile={selectedFile}
-          onChangePreviewURL={setPreviewURL}
-          onChangeSelectedFile={setSelectedFile}
-        />
+    <div className="rounded-md bg-white p-10 border shadow-md border-light-blue">
+      {mutation.isPending || mutationUser.isPending ? (
+        <CustomLoader loaderSize={100} paddingY={250} />
+      ) : (
+        <>
+          <div className="flex items-center mb-10 relative">
+            <UploadAvatarOrLogo
+              previewURL={previewURL}
+              targetType={ETargetObject.User}
+              selectedFile={selectedFile}
+              onChangePreviewURL={setPreviewURL}
+              onChangeSelectedFile={setSelectedFile}
+            />
 
-        <div className="ml-5">
-          <p className="text-[24px] font-semibold mb-3">{`${currentUser?.name} ${currentUser?.surname}`}</p>
-          <p className="text-semi-gray mb-2">{currentUser?.email}</p>
-          <p className=" ">Role: User</p>
-        </div>
-      </div>
-      <p className="text-[28px] font-semibold mb-5">Personal Data:</p>
-      <form onSubmit={handleSubmit(handleSaveData)}></form>
-      <div className="max-w-[400px]">
-        <p className="mb-3 font-semibold">Name:</p>
-        <TextField
-          required
-          id="outlined-basic"
-          variant="outlined"
-          error={!!errors.name}
-          helperText={errors.name && errors.name.message}
-          {...register("name", {
-            required: "Name is required",
-          })}
-          sx={{ mb: "25px", width: "100%" }}
-        />
-        <p className="mb-3 font-semibold">Surname:</p>
-        <TextField
-          required
-          id="outlined-basic"
-          variant="outlined"
-          error={!!errors.surname}
-          helperText={errors.surname && errors.surname.message}
-          {...register("surname", {
-            required: "Surname is required",
-          })}
-          sx={{ mb: "35px", width: "100%" }}
-        />
-      </div>
-      <div className="flex flex-col max-w-[200px]">
-        <Button
-          variant="contained"
-          sx={{ mb: "50px" }}
-          type="submit"
-        >
-          Save
-        </Button>
-        <Button
-          variant="contained"
-          color="warning"
-          sx={{ mb: "20px" }}
-          onClick={() => navigate("/reset-password")}
-        >
-          Reset password
-        </Button>
-        <LogoutComponent
-          variant={EVariantLogout.Button}
-          handleClick={() => {}}
-        />
-      </div>
+            <div className="ml-5">
+              <p className="text-[24px] font-semibold mb-3">{`${currentUser?.name} ${currentUser?.surname}`}</p>
+              <p className="text-semi-gray mb-2">{currentUser?.email}</p>
+              <p className=" ">Role: User</p>
+            </div>
+          </div>
+          <p className="text-[28px] font-semibold mb-5">Personal Data:</p>
+          <form onSubmit={handleSubmit(handleSaveData)}>
+            <div className="max-w-[400px]">
+              <p className="mb-3 font-semibold">Name:</p>
+              <TextField
+                required
+                id="outlined-basic"
+                variant="outlined"
+                error={!!errors.name}
+                helperText={errors.name && errors.name.message}
+                {...register("name", {
+                  required: "Name is required",
+                })}
+                sx={{ mb: "25px", width: "100%" }}
+              />
+              <p className="mb-3 font-semibold">Surname:</p>
+              <TextField
+                required
+                id="outlined-basic"
+                variant="outlined"
+                error={!!errors.surname}
+                helperText={errors.surname && errors.surname.message}
+                {...register("surname", {
+                  required: "Surname is required",
+                })}
+                sx={{ mb: "35px", width: "100%" }}
+              />
+            </div>
+
+            <div className="flex flex-col max-w-[200px]">
+              <Button variant="contained" sx={{ mb: "50px" }} type="submit">
+                Save
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                sx={{ mb: "20px" }}
+                onClick={() => navigate("/reset-password")}
+              >
+                Reset password
+              </Button>
+              <LogoutComponent
+                variant={EVariantLogout.Button}
+                handleClick={() => {}}
+              />
+            </div>
+          </form>
+        </>
+      )}
+
       <AutohideSnackbar
         message={snackbarDetails.message}
         isOpen={snackbarOpen}

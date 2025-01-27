@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { UseFormRegisterReturn } from "react-hook-form";
 
 interface Props {
-  errorValue: { message?: string};
+  errorValue: { message?: string} | undefined;
   label: string;
   registerProps: UseFormRegisterReturn<string>;
 }

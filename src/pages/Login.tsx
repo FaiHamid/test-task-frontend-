@@ -32,6 +32,7 @@ export const Login = () => {
     onSuccess: (data) => {
       const { accessToken } = data;
       accessTokenService.save(accessToken);
+      console.log('hi');
       navigate(state.pathname || "/companies", { replace: true });
     },
     onError: (error) => {
@@ -42,13 +43,14 @@ export const Login = () => {
 
   const handleLogin = async (data: IUserLogin) => {
 
-    if (errors) {
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
     try {
       await mutation.mutateAsync(data);
       reset();
+      // navigate('/companies');
     } catch (error) {
       console.error("Failed to login user:", error);
     }
@@ -77,7 +79,7 @@ export const Login = () => {
             sx={{ mb: "12px", width: "100%" }}
           />
           <PasswordField
-            errorValue={errors.password || {}}
+            errorValue={errors.password}
             label="Password"
             registerProps={register("password", {
               required: "Password is required",
