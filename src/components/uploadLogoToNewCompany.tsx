@@ -1,5 +1,8 @@
 import React, { useRef } from "react";
 import { Avatar } from "./avatar";
+import defaultPicture from '../assets/images/item_company_icon_default.png';
+import addPicture from '../assets/images/add_picture.png';
+import cancelPicture from "../assets/images/cancel_upload.png";
 
 interface Props {
   previewURL: string | null;
@@ -49,8 +52,9 @@ export const UploadLogoToNewCompany: React.FC<Props> = ({
     <>
       <Avatar
         size={150}
-        source={previewURL || 'https://i.imgur.com/5MRjPJ9.png' }
+        source={previewURL || defaultPicture}
         altText="avatar"
+        padding={20}
       />
       {selectedFile && (
         <button
@@ -58,7 +62,7 @@ export const UploadLogoToNewCompany: React.FC<Props> = ({
           className="pointer w-10 h-10 bg-gray-100 rounded-full p-2 absolute 
       left-0 top-[100px] border-2 border-semi-gray"
         >
-          <img src="https://i.imgur.com/KpD60ma.png" alt="Cancel Upload" />
+          <img src={cancelPicture} alt="Cancel Upload" />
         </button>
       )}
       <div className="relative">
@@ -66,7 +70,7 @@ export const UploadLogoToNewCompany: React.FC<Props> = ({
           onClick={handleClick}
           className="pointer w-12 h-12 bg-light-blue rounded-full p-2 absolute right-2 top-5"
         >
-          <img src="https://i.imgur.com/ccmMXRa.png" alt="Upload Icon" />
+          <img src={addPicture} alt="Upload Icon" />
         </button>
         <input
           type="file"

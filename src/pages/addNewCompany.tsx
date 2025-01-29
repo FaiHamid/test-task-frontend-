@@ -1,9 +1,8 @@
 import { Button, TextField } from "@mui/material";
 import React, { useState } from "react";
 import { Autocomplete, LoadScript } from "@react-google-maps/api";
-import { ETargetObject, ICompany } from "../types/Company";
+import { ICompany } from "../types/Company";
 import { ESnackbarStatus } from "../types/User";
-import { UploadAvatarOrLogo } from "../components/uploadAvatarOrLogo";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { companiesService } from "../services/companiesService";
 import { AxiosError } from "axios";
@@ -11,6 +10,7 @@ import { AutohideSnackbar } from "../utils/snackBar";
 import { currentUserQuery } from "../reactQuery/userQuery";
 import { CustomLoader } from "../components/customLoader";
 import { useForm } from "react-hook-form";
+import { UploadLogoToNewCompany } from "../components/uploadLogoToNewCompany";
 
 export const NewCompany: React.FC = () => {
   const { data: currentUser, isLoading } = useQuery(currentUserQuery);
@@ -22,8 +22,9 @@ export const NewCompany: React.FC = () => {
     message: "",
     status: ESnackbarStatus.Success,
   });
-  // eslint-disable-next-line no-undef
+
   const [autocomplete, setAutocomplete] =
+    // eslint-disable-next-line no-undef
     useState<google.maps.places.Autocomplete | null>(null);
 
   const {
@@ -77,7 +78,7 @@ export const NewCompany: React.FC = () => {
     }
   };
 
-  const mutation = useMutation<void, Error, Partial<ICompany>>({
+  const mutation = useMutation<void, Error, Omit<ICompany, "idUser">>({
     mutationFn: async (data) => {
       if (currentUser) {
         await companiesService.addNewCompany({
@@ -95,7 +96,7 @@ export const NewCompany: React.FC = () => {
     },
   });
 
-  const handleAddCompany = async (data: Partial<ICompany>) => {
+  const handleAddCompany = async (data: Omit<ICompany, "idUser">) => {
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -120,7 +121,7 @@ export const NewCompany: React.FC = () => {
   };
 
   if (isLoading) {
-    <CustomLoader loaderSize={30} paddingY={50} />;
+    return <CustomLoader loaderSize={30} paddingY={50} />;
   }
 
   return (
@@ -134,9 +135,8 @@ export const NewCompany: React.FC = () => {
         </p>
         <div className="col-span-1 row-start-2">
           <div className="flex items-center mb-10 relative">
-            <UploadAvatarOrLogo
+            <UploadLogoToNewCompany
               previewURL={previewURL}
-              targetType={ETargetObject.Company}
               selectedFile={selectedFile}
               onChangePreviewURL={setPreviewURL}
               onChangeSelectedFile={setSelectedFile}

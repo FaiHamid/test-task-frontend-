@@ -52,7 +52,7 @@ export const CompaniesList: React.FC = () => {
 
   return (
     <>
-      <div className="flex items-center flex justify-between space-x-5 mb-10">
+      <div className="flex items-center justify-between space-x-5 mb-10">
         <FormControl sx={{ ml: "20px", minWidth: 120 }}>
           <FormHelperText>Sort by:</FormHelperText>
           <Select
